@@ -13,7 +13,7 @@
 python -m http.server 8000
 ```
 
-> 仓库中另有早期上传的 `cat-plane.html`，是同一页面的旧版本；请以 `index.html` 为准。
+> 仓库中另有早期上传的 `cat-plane.html`，内容与 `index.html` 一致；请以 `index.html` 作为主入口。
 
 ## 功能
 
@@ -29,7 +29,7 @@ python -m http.server 8000
 ```
 cat-plane/
 ├── index.html        # 当前主页面：结构、样式、SVG 插画、交互脚本
-├── cat-plane.html    # 早期上传的页面副本（历史版本）
+├── cat-plane.html    # 早期上传的同页面副本（内容与 index.html 一致）
 └── README.md         # 项目说明
 ```
 
