@@ -1,9 +1,25 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="day" data-craft="classic">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>喵机长 · 云端巡航</title>
+<script>
+window.themeForLocalTime = function (d) {
+  d = d || new Date();
+  const h = d.getHours() + d.getMinutes() / 60;
+  if ((h >= 5 && h < 7) || (h >= 17 && h < 20)) return 'sunset';
+  if (h >= 7 && h < 17) return 'day';
+  return 'night';
+};
+document.documentElement.dataset.theme = window.themeForLocalTime();
+try {
+  var savedCraft = localStorage.getItem('cat-plane-craft');
+  if (savedCraft && ['classic', 'jet', 'paper', 'biplane'].indexOf(savedCraft) >= 0) {
+    document.documentElement.dataset.craft = savedCraft;
+  }
+} catch (e) {}
+</script>
 <style>
 :root{
   --mx:0; --my:0; --rate:1;
@@ -156,6 +172,22 @@ body{
 .cat-tail{transform-box:view-box;transform-origin:150px 148px;animation:wag 2.6s ease-in-out infinite}
 @keyframes wag{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(9deg)}}
 
+.craft{display:none}
+[data-craft="classic"] .craft--classic,
+[data-craft="jet"] .craft--jet,
+[data-craft="paper"] .craft--paper,
+[data-craft="biplane"] .craft--biplane{display:inline}
+.canopy{display:none}
+[data-craft="jet"] .canopy{display:inline}
+.cockpit-rim{stroke:var(--cockpit-rim,#fffaf0)}
+[data-craft="classic"]{--cockpit-rim:#fffaf0}
+[data-craft="jet"]{--cockpit-rim:#cfe4ff}
+[data-craft="paper"]{--cockpit-rim:#fff}
+[data-craft="biplane"]{--cockpit-rim:#f5cf94}
+.jet-flame{transform-box:fill-box;transform-origin:right center;animation:flame .4s ease-in-out infinite alternate}
+.jet-flame.inner{animation-delay:-.2s}
+@keyframes flame{from{transform:scaleX(.72);opacity:.65}to{transform:scaleX(1.12);opacity:1}}
+
 .ui{
   position:absolute;inset:0;z-index:8;padding:clamp(16px,3vw,38px);
   display:flex;flex-direction:column;justify-content:space-between;gap:18px;pointer-events:none;
@@ -170,7 +202,9 @@ body{
 .eyebrow{display:block;font-size:11px;letter-spacing:.22em;opacity:.72;margin-bottom:8px}
 h1{margin:0;font-size:clamp(20px,2.5vw,32px);letter-spacing:.04em;font-weight:800}
 .title-card p{margin:8px 0 0;font-size:13px;opacity:.78}
-.controls{display:flex;gap:8px;flex-wrap:wrap}
+.controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.control-row{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.control-label{font-size:11px;letter-spacing:.12em;opacity:.75;white-space:nowrap}
 .btn{
   pointer-events:auto;cursor:pointer;font:inherit;font-size:13px;font-weight:600;color:var(--ui-text);
   padding:10px 16px;border-radius:999px;background:var(--ui-bg);border:1px solid var(--ui-border);
@@ -193,12 +227,17 @@ h1{margin:0;font-size:clamp(20px,2.5vw,32px);letter-spacing:.04em;font-weight:80
   border:1px solid var(--ui-border);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   box-shadow:0 18px 45px rgba(31,58,104,.16);transition:background .9s,border-color .9s;
 }
+.hud-mode{font-size:11px;letter-spacing:.1em;opacity:.85;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--ui-border)}
 .hud-row{display:flex;align-items:baseline;gap:8px;font-size:12px;opacity:.85;margin:3px 0}
 .hud-row span{width:34px;letter-spacing:.1em}
 .hud-row strong{font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .hud-row small{opacity:.7}
 .hud-bar{height:5px;border-radius:5px;background:rgba(255,255,255,.35);margin-top:10px;overflow:hidden}
 .hud-bar i{display:block;height:100%;width:50%;border-radius:5px;background:linear-gradient(90deg,#ffd166,#ff6f7d);transition:width .2s}
+.hud-clock{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:9px;font-size:11px;opacity:.85}
+.hud-clock span{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.hud-clock small{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hud-craft{font-size:11px;letter-spacing:.06em;opacity:.8;margin-top:7px}
 .center-stack{display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;padding-bottom:4px}
 .hint{margin:0;font-size:12px;opacity:.75;text-align:center;line-height:1.6}
 .badge{
@@ -221,6 +260,8 @@ h1{margin:0;font-size:clamp(20px,2.5vw,32px);letter-spacing:.04em;font-weight:80
   .title-card{padding:12px 16px}
   .title-card p{display:none}
   .badge{display:none}
+  .controls{align-items:flex-start}
+  .control-row{justify-content:flex-start}
   .hud{min-width:140px;padding:10px 14px}
   .hud-row strong{font-size:16px}
   .center-stack{order:3;flex-basis:100%}
@@ -236,7 +277,7 @@ h1{margin:0;font-size:clamp(20px,2.5vw,32px);letter-spacing:.04em;font-weight:80
 </style>
 </head>
 <body>
-<div class="scene" id="scene" data-theme="day">
+<div class="scene" id="scene">
   <div class="sky day"></div>
   <div class="sky sunset"></div>
   <div class="sky night"></div>
@@ -276,80 +317,148 @@ h1{margin:0;font-size:clamp(20px,2.5vw,32px);letter-spacing:.04em;font-weight:80
               <stop offset="0" stop-color="#e0f7ff" stop-opacity=".6"/>
               <stop offset="1" stop-color="#5aa9e6" stop-opacity=".36"/>
             </linearGradient>
+            <linearGradient id="jetBody" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f2f7ff"/><stop offset="1" stop-color="#8fa8d8"/>
+            </linearGradient>
+            <linearGradient id="jetWing" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#6d8ff0"/><stop offset="1" stop-color="#3b4fa8"/>
+            </linearGradient>
+            <linearGradient id="woodBody" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f6d299"/><stop offset="1" stop-color="#d08b45"/>
+            </linearGradient>
+            <linearGradient id="paperShade" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dbe6fa"/>
+            </linearGradient>
           </defs>
 
-          <path d="M62 158 L74 96 Q76 86 86 90 L138 136 L118 152 Z" fill="#ff8070" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M56 176 L128 178 L112 204 L44 198 Z" fill="#ffb36b" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M58 170 C58 146 92 136 144 136 L296 136 C338 136 366 148 366 170 C366 192 338 204 296 204 L144 204 C92 204 58 194 58 170 Z" fill="url(#bodyG)" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M82 160 L126 160" stroke="#ffb36b" stroke-width="7" stroke-linecap="round"/>
-          <circle cx="316" cy="168" r="9" fill="#8fd3ff" stroke="#3f3a56" stroke-width="3"/>
-          <path d="M350 148 Q386 152 386 170 Q386 188 350 192 Z" fill="#ff8070" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
-
-          <ellipse cx="212" cy="140" rx="68" ry="25" fill="#4a4668" stroke="#3f3a56" stroke-width="4"/>
-
-          <g class="cat-tail">
-            <path d="M160 148 C132 152 116 136 122 114 C126 100 142 98 148 108" fill="none" stroke="#3f3a56" stroke-width="18" stroke-linecap="round"/>
-            <path d="M160 148 C132 152 116 136 122 114 C126 100 142 98 148 108" fill="none" stroke="#f8b45a" stroke-width="12" stroke-linecap="round"/>
-          </g>
-
-          <path class="scarf" d="M184 136 C158 130 142 146 110 136 C126 154 148 160 180 150 Z" fill="#ff6b6b" stroke="#3f3a56" stroke-width="3" stroke-linejoin="round"/>
-          <ellipse cx="212" cy="148" rx="42" ry="32" fill="#f8b45a" stroke="#3f3a56" stroke-width="4"/>
-          <ellipse cx="212" cy="152" rx="20" ry="20" fill="#fff3e0"/>
-
-          <path class="ear" d="M178 78 L172 38 Q172 32 179 36 L206 62 Z" fill="#f8b45a" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M182 68 L179 46 L195 62 Z" fill="#ff9db0"/>
-          <path class="ear delay" d="M246 78 L254 38 Q256 32 248 36 L220 62 Z" fill="#f8b45a" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M242 68 L248 46 L230 62 Z" fill="#ff9db0"/>
-
-          <ellipse cx="212" cy="100" rx="44" ry="38" fill="#f8b45a" stroke="#3f3a56" stroke-width="4"/>
-          <ellipse cx="212" cy="120" rx="24" ry="15" fill="#fff3e0"/>
-          <ellipse cx="180" cy="116" rx="8" ry="5" fill="#ff9db0" opacity=".7"/>
-          <ellipse cx="244" cy="116" rx="8" ry="5" fill="#ff9db0" opacity=".7"/>
-
-          <g class="eyes">
-            <ellipse cx="194" cy="98" rx="12" ry="12" fill="#fff8e7"/>
-            <ellipse cx="230" cy="98" rx="12" ry="12" fill="#fff8e7"/>
-            <ellipse cx="194" cy="98" rx="7" ry="10" fill="#7fbf6a"/>
-            <ellipse cx="230" cy="98" rx="7" ry="10" fill="#7fbf6a"/>
-            <ellipse cx="194" cy="98" rx="2.5" ry="9" fill="#33384a"/>
-            <ellipse cx="230" cy="98" rx="2.5" ry="9" fill="#33384a"/>
-            <circle cx="190" cy="93" r="3" fill="#fff"/>
-            <circle cx="226" cy="93" r="3" fill="#fff"/>
-          </g>
-
-          <path d="M168 88 L158 86 M256 88 L266 86" stroke="#7a5238" stroke-width="7" stroke-linecap="round"/>
-          <rect x="172" y="78" width="40" height="34" rx="14" fill="url(#lensG)" stroke="#7a5238" stroke-width="5"/>
-          <rect x="212" y="78" width="40" height="34" rx="14" fill="url(#lensG)" stroke="#7a5238" stroke-width="5"/>
-          <path d="M211 88 L213 88" stroke="#7a5238" stroke-width="7" stroke-linecap="round"/>
-          <path d="M180 82 L190 82 L178 108 L174 108 Z" fill="#fff" opacity=".3"/>
-          <path d="M220 82 L230 82 L218 108 L214 108 Z" fill="#fff" opacity=".3"/>
-
-          <path d="M207 114 L217 114 L212 120 Z" fill="#ff8fa3" stroke="#3f3a56" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M212 120 Q206 128 200 123 M212 120 Q218 128 224 123" fill="none" stroke="#3f3a56" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M188 118 L162 112 M188 122 L160 122 M188 126 L164 132 M236 118 L262 112 M236 122 L264 122 M236 126 L260 132" fill="none" stroke="#3f3a56" stroke-width="2" stroke-linecap="round" opacity=".9"/>
-
-          <path d="M178 132 Q212 148 246 132 L248 145 Q212 161 176 145 Z" fill="#ff6b6b" stroke="#3f3a56" stroke-width="3" stroke-linejoin="round"/>
-
-          <path d="M146 140 Q212 176 278 140" fill="none" stroke="#fffaf0" stroke-width="9" stroke-linecap="round"/>
-          <path d="M146 140 Q212 176 278 140" fill="none" stroke="#3f3a56" stroke-width="2" opacity=".35"/>
-
-          <ellipse cx="184" cy="152" rx="12" ry="9" fill="#fff3e0" stroke="#3f3a56" stroke-width="3"/>
-          <ellipse cx="240" cy="152" rx="12" ry="9" fill="#fff3e0" stroke="#3f3a56" stroke-width="3"/>
-          <path d="M181 149 L181 155 M187 149 L187 155 M237 149 L237 155 M243 149 L243 155" stroke="#3f3a56" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>
-
-          <path d="M186 168 L292 168 L246 244 Q240 252 230 250 L142 236 Q132 234 138 226 Z" fill="url(#wingG)" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M192 180 L278 180" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".45"/>
-          <circle cx="142" cy="232" r="6" fill="#8ef0ff" stroke="#3f3a56" stroke-width="2"/>
-          <circle cx="232" cy="246" r="5" fill="#ffe28a" stroke="#3f3a56" stroke-width="2"/>
-
-          <g transform="translate(388 170)">
-            <circle class="prop-blur" r="64" fill="none" stroke="#ffd166" stroke-width="12" stroke-dasharray="26 18"/>
-            <g class="prop">
-              <path d="M-8 -10 C-12 -34 -10 -58 0 -66 C10 -58 12 -34 8 -10 Z" fill="#ffd166" stroke="#3f3a56" stroke-width="3" stroke-linejoin="round"/>
-              <path d="M-8 10 C-12 34 -10 58 0 66 C10 58 12 34 8 10 Z" fill="#ffd166" stroke="#3f3a56" stroke-width="3" stroke-linejoin="round"/>
+          <g class="craft craft--classic">
+            <path d="M62 158 L74 96 Q76 86 86 90 L138 136 L118 152 Z" fill="#ff8070" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M56 176 L128 178 L112 204 L44 198 Z" fill="#ffb36b" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M58 170 C58 146 92 136 144 136 L296 136 C338 136 366 148 366 170 C366 192 338 204 296 204 L144 204 C92 204 58 194 58 170 Z" fill="url(#bodyG)" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M82 160 L126 160" stroke="#ffb36b" stroke-width="7" stroke-linecap="round"/>
+            <circle cx="316" cy="168" r="9" fill="#8fd3ff" stroke="#3f3a56" stroke-width="3"/>
+            <path d="M350 148 Q386 152 386 170 Q386 188 350 192 Z" fill="#ff8070" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
+            <ellipse cx="212" cy="140" rx="68" ry="25" fill="#4a4668" stroke="#3f3a56" stroke-width="4"/>
+            <path d="M186 168 L292 168 L246 244 Q240 252 230 250 L142 236 Q132 234 138 226 Z" fill="url(#wingG)" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M192 180 L278 180" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+            <circle cx="142" cy="232" r="6" fill="#8ef0ff" stroke="#3f3a56" stroke-width="2"/>
+            <circle cx="232" cy="246" r="5" fill="#ffe28a" stroke="#3f3a56" stroke-width="2"/>
+            <g transform="translate(388 170)">
+              <circle class="prop-blur" r="64" fill="none" stroke="#ffd166" stroke-width="12" stroke-dasharray="26 18"/>
+              <g class="prop">
+                <path d="M-8 -10 C-12 -34 -10 -58 0 -66 C10 -58 12 -34 8 -10 Z" fill="#ffd166" stroke="#3f3a56" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M-8 10 C-12 34 -10 58 0 66 C10 58 12 34 8 10 Z" fill="#ffd166" stroke="#3f3a56" stroke-width="3" stroke-linejoin="round"/>
+              </g>
+              <circle r="8" fill="#3f3a56"/>
+              <circle r="3" fill="#ffd166"/>
             </g>
-            <circle r="8" fill="#3f3a56"/>
-            <circle r="3" fill="#ffd166"/>
+          </g>
+
+          <g class="craft craft--jet">
+            <path class="jet-flame" d="M44 158 C18 160 8 168 0 170 C8 172 18 180 44 182 Z" fill="#ff9a3c"/>
+            <path class="jet-flame inner" d="M44 163 C26 165 20 169 12 170 C20 171 26 175 44 177 Z" fill="#fff0a8"/>
+            <path d="M40 154 L60 154 L60 186 L40 186 Z" fill="#2b3a63" stroke="#1d2a4d" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M64 152 L96 96 Q100 88 108 92 L152 142 L120 152 Z" fill="#5b7bd6" stroke="#2b3a63" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M58 170 L96 148 L300 146 C350 146 392 158 414 170 C392 182 350 194 300 194 L96 192 Z" fill="url(#jetBody)" stroke="#2b3a63" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M120 184 L340 184" stroke="#7fd8ff" stroke-width="4" stroke-linecap="round" opacity=".75"/>
+            <circle cx="300" cy="164" r="6" fill="#8ff0ff" stroke="#2b3a63" stroke-width="2"/>
+            <circle cx="324" cy="164" r="6" fill="#8ff0ff" stroke="#2b3a63" stroke-width="2"/>
+            <circle cx="348" cy="164" r="6" fill="#8ff0ff" stroke="#2b3a63" stroke-width="2"/>
+            <circle cx="407" cy="170" r="5" fill="#fff3b0"/>
+            <path d="M180 168 L300 168 L238 238 Q230 246 220 242 L120 210 Q112 206 120 200 Z" fill="url(#jetWing)" stroke="#2b3a63" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M196 186 L282 186" stroke="#dce9ff" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+            <ellipse cx="212" cy="140" rx="70" ry="24" fill="#1b2a52" stroke="#2b3a63" stroke-width="4"/>
+          </g>
+
+          <g class="craft craft--paper">
+            <path d="M412 168 L84 96 L146 166 L84 244 Z" fill="url(#paperShade)" stroke="#7b8aa8" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M412 168 L84 96 L146 166 Z" fill="#fff" opacity=".7"/>
+            <path d="M412 168 L146 166" fill="none" stroke="#8a9ab8" stroke-width="3" stroke-dasharray="9 7" stroke-linecap="round"/>
+            <path d="M84 96 L146 166 L84 244" fill="none" stroke="#8a9ab8" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M100 112 L120 74 L140 118 Z" fill="#fff" stroke="#8a9ab8" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M88 168 L52 152 L62 170 L52 190 Z" fill="#eaf1ff" stroke="#8a9ab8" stroke-width="3" stroke-linejoin="round"/>
+            <ellipse cx="212" cy="140" rx="68" ry="22" fill="#dfe8fa" stroke="#8a9ab8" stroke-width="3"/>
+            <path d="M146 166 L188 142" fill="none" stroke="#8a9ab8" stroke-width="2.5" stroke-dasharray="7 6"/>
+          </g>
+
+          <g class="craft craft--biplane">
+            <path d="M130 92 L300 92 L292 108 L138 108 Z" fill="#e0a75a" stroke="#5a3a2a" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M158 108 L164 192 M272 108 L278 192" stroke="#5a3a2a" stroke-width="4"/>
+            <path d="M62 156 L72 98 Q74 88 84 92 L136 136 L118 150 Z" fill="#c8873f" stroke="#5a3a2a" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M54 178 L128 178 L112 204 L42 198 Z" fill="#e0a75a" stroke="#5a3a2a" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M58 170 C58 148 92 138 144 138 L300 138 C340 138 366 150 366 170 C366 190 340 202 300 202 L144 202 C92 202 58 192 58 170 Z" fill="url(#woodBody)" stroke="#5a3a2a" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M84 176 L140 176 M84 186 L140 186" stroke="#b9762f" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="316" cy="168" r="12" fill="#fff3d0" stroke="#5a3a2a" stroke-width="3"/>
+            <path d="M316 160 L318 166 L324 166 L319 170 L321 176 L316 172 L311 176 L313 170 L308 166 L314 166 Z" fill="#d35a3f"/>
+            <path d="M350 148 Q386 152 386 170 Q386 188 350 192 Z" fill="#c8873f" stroke="#5a3a2a" stroke-width="4" stroke-linejoin="round"/>
+            <ellipse cx="212" cy="140" rx="68" ry="24" fill="#6b432c" stroke="#5a3a2a" stroke-width="4"/>
+            <path d="M170 190 L300 190 L286 222 L156 222 Z" fill="#d98b42" stroke="#5a3a2a" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M190 202 L190 224" stroke="#5a3a2a" stroke-width="4"/>
+            <circle cx="190" cy="234" r="13" fill="#4a4a55" stroke="#2f2f3a" stroke-width="3"/>
+            <circle cx="190" cy="234" r="4" fill="#c9c9d4"/>
+            <g transform="translate(388 170)">
+              <g class="prop">
+                <path d="M-7 -10 C-11 -38 -9 -64 0 -72 C9 -64 11 -38 7 -10 Z" fill="#e6b56a" stroke="#5a3a2a" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M-7 10 C-11 38 -9 64 0 72 C9 64 11 38 7 10 Z" fill="#e6b56a" stroke="#5a3a2a" stroke-width="3" stroke-linejoin="round"/>
+              </g>
+              <circle r="9" fill="#5a3a2a"/>
+              <circle r="4" fill="#ffd166"/>
+            </g>
+          </g>
+
+          <g class="cat">
+            <g class="cat-tail">
+              <path d="M160 148 C132 152 116 136 122 114 C126 100 142 98 148 108" fill="none" stroke="#3f3a56" stroke-width="18" stroke-linecap="round"/>
+              <path d="M160 148 C132 152 116 136 122 114 C126 100 142 98 148 108" fill="none" stroke="#f8b45a" stroke-width="12" stroke-linecap="round"/>
+            </g>
+
+            <path class="scarf" d="M184 136 C158 130 142 146 110 136 C126 154 148 160 180 150 Z" fill="#ff6b6b" stroke="#3f3a56" stroke-width="3" stroke-linejoin="round"/>
+            <ellipse cx="212" cy="148" rx="42" ry="32" fill="#f8b45a" stroke="#3f3a56" stroke-width="4"/>
+            <ellipse cx="212" cy="152" rx="20" ry="20" fill="#fff3e0"/>
+
+            <path class="ear" d="M178 78 L172 38 Q172 32 179 36 L206 62 Z" fill="#f8b45a" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M182 68 L179 46 L195 62 Z" fill="#ff9db0"/>
+            <path class="ear delay" d="M246 78 L254 38 Q256 32 248 36 L220 62 Z" fill="#f8b45a" stroke="#3f3a56" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M242 68 L248 46 L230 62 Z" fill="#ff9db0"/>
+
+            <ellipse cx="212" cy="100" rx="44" ry="38" fill="#f8b45a" stroke="#3f3a56" stroke-width="4"/>
+            <ellipse cx="212" cy="120" rx="24" ry="15" fill="#fff3e0"/>
+            <ellipse cx="180" cy="116" rx="8" ry="5" fill="#ff9db0" opacity=".7"/>
+            <ellipse cx="244" cy="116" rx="8" ry="5" fill="#ff9db0" opacity=".7"/>
+
+            <g class="eyes">
+              <ellipse cx="194" cy="98" rx="12" ry="12" fill="#fff8e7"/>
+              <ellipse cx="230" cy="98" rx="12" ry="12" fill="#fff8e7"/>
+              <ellipse cx="194" cy="98" rx="7" ry="10" fill="#7fbf6a"/>
+              <ellipse cx="230" cy="98" rx="7" ry="10" fill="#7fbf6a"/>
+              <ellipse cx="194" cy="98" rx="2.5" ry="9" fill="#33384a"/>
+              <ellipse cx="230" cy="98" rx="2.5" ry="9" fill="#33384a"/>
+              <circle cx="190" cy="93" r="3" fill="#fff"/>
+              <circle cx="226" cy="93" r="3" fill="#fff"/>
+            </g>
+
+            <path d="M168 88 L158 86 M256 88 L266 86" stroke="#7a5238" stroke-width="7" stroke-linecap="round"/>
+            <rect x="172" y="78" width="40" height="34" rx="14" fill="url(#lensG)" stroke="#7a5238" stroke-width="5"/>
+            <rect x="212" y="78" width="40" height="34" rx="14" fill="url(#lensG)" stroke="#7a5238" stroke-width="5"/>
+            <path d="M211 88 L213 88" stroke="#7a5238" stroke-width="7" stroke-linecap="round"/>
+            <path d="M180 82 L190 82 L178 108 L174 108 Z" fill="#fff" opacity=".3"/>
+            <path d="M220 82 L230 82 L218 108 L214 108 Z" fill="#fff" opacity=".3"/>
+
+            <path d="M207 114 L217 114 L212 120 Z" fill="#ff8fa3" stroke="#3f3a56" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M212 120 Q206 128 200 123 M212 120 Q218 128 224 123" fill="none" stroke="#3f3a56" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M188 118 L162 112 M188 122 L160 122 M188 126 L164 132 M236 118 L262 112 M236 122 L264 122 M236 126 L260 132" fill="none" stroke="#3f3a56" stroke-width="2" stroke-linecap="round" opacity=".9"/>
+
+            <path d="M178 132 Q212 148 246 132 L248 145 Q212 161 176 145 Z" fill="#ff6b6b" stroke="#3f3a56" stroke-width="3" stroke-linejoin="round"/>
+
+            <path class="cockpit-rim" d="M146 140 Q212 176 278 140" fill="none" stroke-width="9" stroke-linecap="round"/>
+            <path d="M146 140 Q212 176 278 140" fill="none" stroke="#3f3a56" stroke-width="2" opacity=".35"/>
+
+            <ellipse cx="184" cy="152" rx="12" ry="9" fill="#fff3e0" stroke="#3f3a56" stroke-width="3"/>
+            <ellipse cx="240" cy="152" rx="12" ry="9" fill="#fff3e0" stroke="#3f3a56" stroke-width="3"/>
+            <path d="M181 149 L181 155 M187 149 L187 155 M237 149 L237 155 M243 149 L243 155" stroke="#3f3a56" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>
+
+            <path class="canopy" d="M144 140 Q150 70 212 68 Q274 70 280 140 Z" fill="#9fdcff" fill-opacity=".16" stroke="#d8f2ff" stroke-opacity=".7" stroke-width="3"/>
+            <path class="canopy" d="M164 96 Q184 80 206 78" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="4" stroke-linecap="round"/>
           </g>
         </svg>
       </div>
@@ -364,17 +473,31 @@ h1{margin:0;font-size:clamp(20px,2.5vw,32px);letter-spacing:.04em;font-weight:80
         <p>今天的云，软得像刚出炉的棉花糖。</p>
       </div>
       <div class="controls">
-        <button class="btn active" data-set-theme="day">白昼</button>
-        <button class="btn" data-set-theme="sunset">黄昏</button>
-        <button class="btn" data-set-theme="night">夜航</button>
+        <div class="control-row">
+          <span class="control-label">天空</span>
+          <button class="btn active" data-set-theme="auto" title="按本地时间自动选择天空">自动</button>
+          <button class="btn" data-set-theme="day">白昼</button>
+          <button class="btn" data-set-theme="sunset">黄昏</button>
+          <button class="btn" data-set-theme="night">夜航</button>
+        </div>
+        <div class="control-row">
+          <span class="control-label">机型</span>
+          <button class="btn active" data-set-craft="classic">经典机</button>
+          <button class="btn" data-set-craft="jet">星际喷气</button>
+          <button class="btn" data-set-craft="paper">折纸滑翔</button>
+          <button class="btn" data-set-craft="biplane">复古双翼</button>
+        </div>
       </div>
     </div>
 
     <div class="bottombar">
       <div class="hud">
+        <div class="hud-mode" id="hudMode">自动跟随 · 白昼</div>
         <div class="hud-row"><span>高度</span><strong id="alt">3280</strong><small>m</small></div>
         <div class="hud-row"><span>航速</span><strong id="spd">240</strong><small>km/h</small></div>
         <div class="hud-bar"><i id="spdBar"></i></div>
+        <div class="hud-clock"><span id="clock">--:--</span><small id="tz">本地时区</small></div>
+        <div class="hud-craft" id="hudCraft">经典巡航机</div>
       </div>
       <div class="center-stack">
         <button class="btn primary" id="boostBtn">开启加速</button>
@@ -454,10 +577,73 @@ h1{margin:0;font-size:clamp(20px,2.5vw,32px);letter-spacing:.04em;font-weight:80
   });
 
   const themeBtns = Array.from(document.querySelectorAll('[data-set-theme]'));
+  const themeLabels = { day: '白昼', sunset: '黄昏', night: '夜航' };
+  const clockEl = document.getElementById('clock');
+  const modeEl = document.getElementById('hudMode');
+  const tzEl = document.getElementById('tz');
+  let themeMode = 'auto';
+
+  function localZone() {
+    let name = '';
+    try { name = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+    const mins = -new Date().getTimezoneOffset();
+    const sign = mins >= 0 ? '+' : '-';
+    const offset = 'UTC' + sign + String(Math.floor(Math.abs(mins) / 60)).padStart(2, '0')
+      + ':' + String(Math.abs(mins) % 60).padStart(2, '0');
+    return { short: offset, title: name ? name + ' · ' + offset : offset };
+  }
+  const zone = localZone();
+  tzEl.textContent = zone.short;
+  tzEl.title = zone.title;
+
+  function syncTheme() {
+    const now = new Date();
+    const autoTheme = window.themeForLocalTime(now);
+    const activeTheme = themeMode === 'auto' ? autoTheme : themeMode;
+    document.documentElement.dataset.theme = activeTheme;
+    clockEl.textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    modeEl.textContent = (themeMode === 'auto' ? '自动跟随 · ' : '手动 · ') + themeLabels[activeTheme];
+    themeBtns.forEach(b => {
+      const on = b.dataset.setTheme === themeMode;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+  }
+
   themeBtns.forEach(btn => btn.addEventListener('click', () => {
-    scene.dataset.theme = btn.dataset.setTheme;
-    themeBtns.forEach(b => b.classList.toggle('active', b === btn));
+    themeMode = btn.dataset.setTheme;
+    syncTheme();
   }));
+
+  syncTheme();
+  setInterval(syncTheme, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) syncTheme();
+  });
+
+  const craftBtns = Array.from(document.querySelectorAll('[data-set-craft]'));
+  const craftNames = {
+    classic: '经典巡航机', jet: '星际喷气机', paper: '折纸滑翔机', biplane: '复古双翼机'
+  };
+  const craftEl = document.getElementById('hudCraft');
+  let craftChoice = document.documentElement.dataset.craft || 'classic';
+  if (!craftNames[craftChoice]) craftChoice = 'classic';
+
+  function syncCraft() {
+    document.documentElement.dataset.craft = craftChoice;
+    craftEl.textContent = craftNames[craftChoice];
+    craftBtns.forEach(b => {
+      const on = b.dataset.setCraft === craftChoice;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+  }
+  craftBtns.forEach(btn => btn.addEventListener('click', () => {
+    craftChoice = btn.dataset.setCraft;
+    try { localStorage.setItem('cat-plane-craft', craftChoice); } catch (e) {}
+    syncCraft();
+  }));
+  syncCraft();
 
   let speed = 240, targetSpeed = 240, alt = 3280;
   const boostBtn = document.getElementById('boostBtn');
