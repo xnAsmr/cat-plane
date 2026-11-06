@@ -13,6 +13,8 @@
 python -m http.server 8000
 ```
 
+> 仓库中另有早期上传的 `cat-plane.html`，是同一页面的旧版本；请以 `index.html` 为准。
+
 ## 功能
 
 - **三种天空主题**：白昼、黄昏、夜航（含月亮与星空），切换时天空、云、远山与界面配色平滑过渡。
@@ -26,8 +28,9 @@ python -m http.server 8000
 
 ```
 cat-plane/
-├── index.html    # 页面全部内容：结构、样式、SVG 插画、交互脚本
-└── README.md     # 项目说明
+├── index.html        # 当前主页面：结构、样式、SVG 插画、交互脚本
+├── cat-plane.html    # 早期上传的页面副本（历史版本）
+└── README.md         # 项目说明
 ```
 
 ## 技术实现
